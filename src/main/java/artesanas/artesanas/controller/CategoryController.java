@@ -1,4 +1,4 @@
-/* package artesanas.artesanas.controller;
+package artesanas.artesanas.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -93,4 +93,3 @@ public class CategoryController {
                 return categoryService.getCategoryByName(name);
         }
 }
- */
