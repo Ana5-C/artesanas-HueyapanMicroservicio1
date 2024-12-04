@@ -3,6 +3,7 @@ package artesanas.artesanas;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,7 +16,8 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
     /* @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(
+       http.csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(
                 auth -> auth.requestMatchers("/signin", "/signup").permitAll()
                         .requestMatchers("/customers/**", "/payments/**", "/shoppings/**","carts/**","/shippings/**","/addresses/**","/productsCarts/**").hasRole("ADMIN")
                         .requestMatchers("/").hasRole("USER")
@@ -25,28 +27,32 @@ public class SecurityConfig {
                 .logout(logout -> logout.logoutUrl("/signout").permitAll());
         return http.build();
     } */
+
     @Bean
 public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(auth -> auth
+    http.csrf(AbstractHttpConfigurer::disable) // Deshabilitar CSRF si no es necesario
+        .authorizeHttpRequests(auth -> auth
             .requestMatchers("/signin", "/signup").permitAll() // Permitir acceso sin autenticación
             .requestMatchers("/customers/**", "/payments/**", "/shoppings/**", "/carts/**", "/shippings/**", "/addresses/**", "/productsCarts/**").hasRole("ADMIN")
-            .requestMatchers("/doc/swagger-ui/**").permitAll() // Permitir acceso a Swagger para todos
-            .anyRequest().authenticated() // Requiere autenticación para el resto
-    )
-    .formLogin(form -> form
+            .requestMatchers("/doc/swagger-ui/**").authenticated() // Requerir autenticación para Swagger
+            .requestMatchers("/").authenticated() // Requerir autenticación para la raíz
+            .anyRequest().authenticated() // Todas las demás rutas requieren autenticación
+        )
+        .formLogin(form -> form
             .loginPage("/signin") // Página de inicio de sesión personalizada
-            .defaultSuccessUrl("/doc/swagger-ui/index.html", true) // Redirigir a Swagger tras autenticación
-    )
-    .logout(logout -> logout
+            .defaultSuccessUrl("/", true) // Redirigir a la raíz después de autenticarse
+        )
+        .logout(logout -> logout
             .logoutUrl("/signout") // URL para cerrar sesión
-            .logoutSuccessUrl("/") // Redirigir a raíz después de cerrar sesión
+            .logoutSuccessUrl("/signin") // Redirigir a la página de inicio de sesión tras cerrar sesión
             .permitAll()
-    )
-    .rememberMe(withDefaults()); // Configuración de "recordar usuario"
+        )
+        .rememberMe(withDefaults()); // Configuración de "recordar usuario"
 
     return http.build();
 }
 
+    
 
     @Bean
     public UserDetailsService userDetailsService() {
