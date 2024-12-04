@@ -13,7 +13,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
-    @Bean
+    /* @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(
                 auth -> auth.requestMatchers("/signin", "/signup").permitAll()
@@ -24,7 +24,29 @@ public class SecurityConfig {
                 .rememberMe(withDefaults())
                 .logout(logout -> logout.logoutUrl("/signout").permitAll());
         return http.build();
-    }
+    } */
+    @Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(auth -> auth
+            .requestMatchers("/signin", "/signup").permitAll() // Permitir acceso sin autenticación
+            .requestMatchers("/customers/**", "/payments/**", "/shoppings/**", "/carts/**", "/shippings/**", "/addresses/**", "/productsCarts/**").hasRole("ADMIN")
+            .requestMatchers("/doc/swagger-ui/**").permitAll() // Permitir acceso a Swagger para todos
+            .anyRequest().authenticated() // Requiere autenticación para el resto
+    )
+    .formLogin(form -> form
+            .loginPage("/signin") // Página de inicio de sesión personalizada
+            .defaultSuccessUrl("/doc/swagger-ui/index.html", true) // Redirigir a Swagger tras autenticación
+    )
+    .logout(logout -> logout
+            .logoutUrl("/signout") // URL para cerrar sesión
+            .logoutSuccessUrl("/") // Redirigir a raíz después de cerrar sesión
+            .permitAll()
+    )
+    .rememberMe(withDefaults()); // Configuración de "recordar usuario"
+
+    return http.build();
+}
+
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -38,9 +60,7 @@ public class SecurityConfig {
                 .roles("ADMIN")
                 .build());
         return userDetailsManager;
-
     }
-
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
